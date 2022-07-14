@@ -65,17 +65,19 @@ options:
         - Password for wireless network.
         - Requires auth_mode to be set to psk.
         type: str
-    # dot11w:
-    #     description:
-    #     - 802.11w Management Frame Protection MFP.
-    #     type: str
-    #     choices: [Enabled, Required, Disabled]
     dot11r:
-        description:
-        - 802.11r is a standards-based fast roaming technology.
-        - Requires WPA encryption to be WPA2 only or WPA1 and WPA2.
-        type: str
-        choices: [WPA1 and WPA2, WPA2 only]
+        description: 802.11r Fast roaming
+        returned: success
+        type: dict
+        suboptions:
+            enabled: 
+                description: Enable 802.11r
+                type: bool
+                default: false
+            adaptive:
+                description: User adaptive mode
+                type: bool  
+                default: false  
     wpa_encryption_mode:
         description:
         - Encryption mode within WPA specification.
@@ -339,16 +341,17 @@ data:
             returned: success
             type: str
             sample: SecretWiFiPass
-        # dot11w:
-        #     description: Management frame protection
-        #     returned: success
-        #     type: str
-        #     sample: Enabled
         dot11r:
             description: 802.11r Fast roaming
             returned: success
-            type: str
-            sample: WPA2 only          
+            type: dict
+            suboptions:
+                enabled: 
+                    description: Enable 802.11r
+                    type: bool
+                adaptive:
+                    description: User adaptive mode
+                    type: bool         
         encryption_mode:
             description: Wireless traffic encryption method.
             returned: success
@@ -421,7 +424,6 @@ def construct_payload(meraki):
         "psk": "psk",
         "wpaEncryptionMode": "wpa_encryption_mode",
         "dot11r": "dot11r",
-        # "dot11w": "dot11w",
         "splashPage": "splash_page",
         "radiusServers": "radius_servers",
         "radiusProxyEnabled": "radius_proxy_enabled",
@@ -490,10 +492,6 @@ def main():
         tags=dict(type="list", elements="str"),
         vlan_id=dict(type="int"),
     )
-    # dot11w_arg_spec = dict(
-    #     enabled=dict(type="bool"),
-    #     required=dict(type="bool"),
-    # )
     dot11r_arg_spec = dict(
         enabled=dict(type="bool"),
         adaptive=dict(type="bool"),
@@ -517,11 +515,11 @@ def main():
         encryption_mode=dict(type="str", choices=["wpa", "eap", "wpa-eap"]),
         psk=dict(type="str", no_log=True),
         dot11r=dict(
-            type="dict", default=None, options=dot11r_arg_spec
+            type="dict", default=None, options=dot11r_arg_spec,
+            required_if=[
+                ('enabled', True, ("adaptive",))
+            ]
         ),
-        # dot11w=dict(
-        #     type="dict", default=None, elements="dict", options=dot11w_arg_spec
-        # ),
         wpa_encryption_mode=dict(
             type="str",
             choices=["WPA1 and WPA2", "WPA2 only", "WPA3 Transition Mode", "WPA3 only"],
